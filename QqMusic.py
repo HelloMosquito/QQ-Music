@@ -19,38 +19,22 @@ class QqMusic:
         self._year = self._period[0:4]    # used to build the file name
         self._week = self._period[5:7]   # used to build the file name
         self._period_title = self._period_title_init()
-        # self.doc = pq(url=self.url).text().encode('ISO-8859-1').decode('utf-8')
-        # print(self.doc)
         self._doc = json.loads(pq(url=self._url).text().encode('ISO-8859-1').decode('utf-8'))
         self._rankings = []
-        # print(type(self.doc))
-        # print(self.doc)
-        # print('-----------------------------------------------------------------------------')
-        # encryptedData = """{"detail":{"module":"musicToplist.ToplistInfoServer","method":"GetDetail","param":{
-        # "topId":26,"offset":0,"num":20,"period":"2020_45"}},"comm":{"ct":24,"cv":0}} """
-        # print(QqMusic.get_qq_sign_encrypt(encryptedData))
+        self._crawl_hot_ranking()
 
-    def get_hot_ranking(self):
-        # contents = self.doc(".songlist__list").children()
-        # print(contents)
+    def _crawl_hot_ranking(self):
         allSongsInCurrentPeriod = self._doc["detail"]["data"]["songInfoList"]
-        # rankings = {}
         for idx in range(0, len(allSongsInCurrentPeriod)):
-            # rankings["ranking"] = idx + 1
-            # rankings["song"] = allSongsInCurrentPeriod[idx]["name"]
-            # rankings["singer"] = allSongsInCurrentPeriod[idx]["singer"][0]["name"]
             self._rankings.append([
                 idx + 1,
                 allSongsInCurrentPeriod[idx]["name"],
                 allSongsInCurrentPeriod[idx]["singer"][0]["name"]
             ])
-            # rankings.append(idx)
-            # rankings.append(allSongsInCurrentPeriod[idx]["name"])
-            # rankings.append(allSongsInCurrentPeriod[idx]["singer"][0]["name"])
-            # print(str(idx) + ", "
-            #       + allSongsInCurrentPeriod[idx]["name"] + ", "
-            #       + allSongsInCurrentPeriod[idx]["singer"][0]["name"])
         print("crawling period: " + self._period)
+        return self._rankings
+
+    def get_hot_ranking(self):
         return self._rankings
 
     def save_hot_ranking_in_csv(self):
