@@ -1,5 +1,9 @@
 from QqMusic import QqMusic
 import urllib.parse
+import pandas as pd
+import time
+import random
+
 
 def get_url(request_data_period):
     url_request_data = '{"detail":{"module":"musicToplist.ToplistInfoServer","method":"GetDetail",' \
@@ -12,26 +16,82 @@ def get_url(request_data_period):
     sign = "sign=" + QqMusic.get_qq_sign_encrypt(url_request_data)
 
     request_url = url_prefix + sign + url_infix + url_request_data_encode
-    print(request_url)
+    # print(request_url)
     return request_url
 
 
+def required_period(year, week):
+    return str(year) + "_" + str(week if week > 9 else "0" + str(week))
+
+
+def write_into_excel(data):
+    with pd.ExcelWriter("all rankings.xlsx", encoding="utf8") as writer:
+        for k, v in data.items():
+            ranking_in_current_period = pd.DataFrame(v)
+            ranking_in_current_period.rename(columns={0: "Ranking", 1: "Song", 2: "Singer"}, inplace=True)
+            ranking_in_current_period.to_excel(writer, sheet_name=k, index=False)
+
+
+def start():
+    year = 2019
+    all_ranks = {}
+    for week in range(1, 5):
+        # for week in range(1, 54):
+        period = required_period(year, week)
+        url = get_url(period)
+        qq_music = QqMusic(url, period)
+        all_ranks[period] = qq_music.get_hot_ranking()
+        qq_music.save_hot_ranking_in_csv()
+        # rankings_in_current_period = qq_music.get_hot_ranking()
+        # print(rankings_in_current_period)
+        # print(all_ranks)
+        time.sleep(round(random.uniform(3, 7), 2))
+    # print(all_ranks)
+    write_into_excel(all_ranks)
+
 
 if __name__ == '__main__':
+    start()
 
-#     # 2018-12-28 to 2019-1-3
-#     # t1=2019 & t2=1 & t3=song & t4=55 & t5=1
-#     url2019 = """
-#         https://u.y.qq.com/cgi-bin/musics.fcg?-=getUCGI9722602623516272&g_tk=97949831&sign=zzaptt3alajkevt18427a8f2766fdf57b4163da879f0c8e&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0&data=%7B%22detail%22%3A%7B%22module%22%3A%22musicToplist.ToplistInfoServer%22%2C%22method%22%3A%22GetDetail%22%2C%22param%22%3A%7B%22topId%22%3A26%2C%22offset%22%3A0%2C%22num%22%3A20%2C%22period%22%3A%222019_01%22%7D%7D%2C%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%7D
-#     """
+    # a = {'2019_02': [[1, '知否知否', '胡夏'], [2, '不为谁而作的歌', '林俊杰'], [3, '光年之外', 'G.E.M. 邓紫棋'], [4, '关键词', '林俊杰'],
+    #                  [5, '东西', '林俊呈'], [6, '生僻字', '陈柯宇'], [7, '原来占据你内心的人不是我', '贺一航'], [8, '下坠Falling', 'Corki'],
+    #                  [9, '一曲相思', '半阳'], [10, '可不可以', '张紫豪'], [11, '圣所', '林俊杰'], [12, '体面', '于文文'], [13, '侧脸', '于果'],
+    #                  [14, '天份', '薛之谦'], [15, '年少有为', '李荣浩'], [16, '清明上河图', '李玉刚'], [17, '我不愿明白', '段奥娟'],
+    #                  [18, '纸短情长', '烟把儿乐队'], [19, '再见只是陌生人', '庄心妍'], [20, '天亮以前说再见', '曲肖冰']],
+    #      '2019_03': [[1, '知否知否', '胡夏'], [2, '光年之外', 'G.E.M. 邓紫棋'], [3, '清明上河图', '李玉刚'], [4, '侧脸', '于果'],
+    #                  [5, '不为谁而作的歌', '林俊杰'], [6, '生僻字', '陈柯宇'], [7, '一曲相思', '半阳'], [8, '下坠Falling', 'Corki'],
+    #                  [9, '可不可以', '张紫豪'], [10, '东西', '林俊呈'], [11, '体面', '于文文'], [12, '年少有为', '李荣浩'],
+    #                  [13, '再见只是陌生人', '庄心妍'], [14, '关键词', '林俊杰'], [15, '天份', '薛之谦'], [16, '纸短情长', '烟把儿乐队'],
+    #                  [17, '倒数', 'G.E.M. 邓紫棋'], [18, '狂浪', '花姐'], [19, 'Hello My Love', 'Westlife'], [20, '圣所', '林俊杰']],
+    #      '2019_04': [[1, '知否知否', '胡夏'], [2, '光年之外', 'G.E.M. 邓紫棋'], [3, '清明上河图', '李玉刚'], [4, '我不愿明白', '段奥娟'],
+    #                  [5, '侧脸', '于果'], [6, '一曲相思', '半阳'], [7, '生僻字', '陈柯宇'], [8, '下坠Falling', 'Corki'],
+    #                  [9, '可不可以', '张紫豪'], [10, '沙漠骆驼', '展展与罗罗'], [11, '东西', '林俊呈'], [12, '狂浪', '花姐'],
+    #                  [13, 'Wolves', 'Selena Gomez'], [14, '陪你度过漫长岁月-', '陈奕迅'], [15, '随风', '周深'], [16, '年少有为', '李荣浩'],
+    #                  [17, '体面', '于文文'], [18, '浪子回头', '茄子蛋'], [19, '天亮以前说再见', '曲肖冰'], [20, 'Hello My Love', 'Westlife']]}
+    # for key, value in a.items():
+    #     print("period: " + key + ", " + str(value))
+
+    # for i in range(10):
+    #     print(round(random.uniform(3, 7), 2))
+
+    # period = required_period("2020", "51")
+#     url = get_url(period)
+#     qq_music = QqMusic(url, period)
+#     a = qq_music.get_hot_ranking()
+#     print(a)
+#     print("======")
+#     all = {}
+#     all[period] = a
+#     print(all)
+# #     # qq_music.save_hot_ranking_in_csv()
+#     print("======")
+#     r = pd.DataFrame(a)
+#     s = pd.DataFrame(b)
+#     r.rename(columns={0: "ranking", 1: "song", 2: "singer"}, inplace=True)
+#     s.rename(columns={0: "ranking", 1: "song", 2: "singer"}, inplace=True)
+#     print(r)
 #
-#     # 2019-12-27 to 2020-1-2
-#     # t1=2020 & t2=1 & t3=song & t4=55 & t5=1
-#     url2020 = """
-#     https://u.y.qq.com/cgi-bin/musics.fcg?-=getUCGI6524734975297883&g_tk=97949831&sign=zzaniadiwm7nukc63c7cd0eee44ff7e23aef4320b61ac8b&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0&data=%7B%22detail%22%3A%7B%22module%22%3A%22musicToplist.ToplistInfoServer%22%2C%22method%22%3A%22GetDetail%22%2C%22param%22%3A%7B%22topId%22%3A26%2C%22offset%22%3A0%2C%22num%22%3A20%2C%22period%22%3A%222020_53%22%7D%7D%2C%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%7D
-# """
-
-    url = get_url("2020_53")
-    qq_music = QqMusic(url)
-    qq_music.get_hot_ranking()
-
+#
+#     with pd.ExcelWriter("all rankings.xlsx") as writer:
+#         r.to_excel(writer, sheet_name=period, index=False)
+#         s.to_excel(writer, sheet_name="2019-1", index=False)
