@@ -3,6 +3,7 @@ import urllib.parse
 import pandas as pd
 import time
 import random
+import datetime
 
 
 def get_url(request_data_period):
@@ -20,38 +21,76 @@ def get_url(request_data_period):
     return request_url
 
 
-def required_period(year, week):
-    return str(year) + "_" + str(week if week > 9 else "0" + str(week))
+# def required_period(year, week, show_date_period=False, starting_date=""):
+#     period = str(year) + "week" + str(week if week > 9 else "0" + str(week))
+#     if show_date_period:
+#         period = period + "_" + get_period_date(starting_date, week)
+#     return period
 
 
-def write_into_excel(data):
-    with pd.ExcelWriter("all rankings.xlsx", encoding="utf8") as writer:
-        for k, v in data.items():
+def period_construct(year, week):
+    return str(year)+"_"+str(week if week>9 else "0"+str(week))
+
+
+def write_into_excel(data, year):
+    with pd.ExcelWriter(str(year) + " all rankings.xlsx", encoding="utf8") as writer:
+        for period, v in data.items():
             ranking_in_current_period = pd.DataFrame(v)
             ranking_in_current_period.rename(columns={0: "Ranking", 1: "Song", 2: "Singer"}, inplace=True)
-            ranking_in_current_period.to_excel(writer, sheet_name=k, index=False)
+            ranking_in_current_period.to_excel(writer, sheet_name=period, index=False)
+
+
+# def get_period_date(starting_date, week):
+#     delta_days = datetime.timedelta(days=(week - 1) * 7)        # week starting at 1
+#     period_starting_date = starting_date + delta_days
+#     period_ending_date = period_starting_date + datetime.timedelta(days=6)
+#     return period_starting_date.strftime("%Y%m%d") + "-" + period_ending_date.strftime("%Y%m%d")
+
+
+def user_config():
+    year = 2020
+    show_date_period = True
+    starting_date = datetime.datetime.strptime("2019-12-27", "%Y-%m-%d")
+    return year, show_date_period, starting_date
 
 
 def start():
-    year = 2019
+    year, show_date_period, starting_date = user_config()
     all_ranks = {}
-    for week in range(1, 5):
-        # for week in range(1, 54):
-        period = required_period(year, week)
-        url = get_url(period)
-        qq_music = QqMusic(url, period)
-        all_ranks[period] = qq_music.get_hot_ranking()
+    for week in range(1, 3):
+    # for week in range(1, 54):
+    #     title_period = required_period(year, week, show_date_period, starting_date)
+        period_init = period_construct(year, week)
+        url = get_url(period_init)
+        qq_music = QqMusic(url, period_init, starting_date)
+        all_ranks[qq_music.get_current_period_title()] = qq_music.get_hot_ranking()
         qq_music.save_hot_ranking_in_csv()
         # rankings_in_current_period = qq_music.get_hot_ranking()
         # print(rankings_in_current_period)
         # print(all_ranks)
         time.sleep(round(random.uniform(3, 7), 2))
     # print(all_ranks)
-    write_into_excel(all_ranks)
+    write_into_excel(all_ranks, year)
 
 
 if __name__ == '__main__':
     start()
+
+    # a = "1010_02"
+    # print(a[0:4])
+    # print(a[5:7])
+
+
+
+    # a = datetime.datetime.strptime("2018-12-28", "%Y-%m-%d")
+    #
+    # print(get_period_date(a, 2))
+
+    # print(a)
+    # print(a.strftime("%Y/%m/%d"))
+    # b = a + datetime.timedelta(days=7)
+    # print(b)
+
 
     # a = {'2019_02': [[1, '知否知否', '胡夏'], [2, '不为谁而作的歌', '林俊杰'], [3, '光年之外', 'G.E.M. 邓紫棋'], [4, '关键词', '林俊杰'],
     #                  [5, '东西', '林俊呈'], [6, '生僻字', '陈柯宇'], [7, '原来占据你内心的人不是我', '贺一航'], [8, '下坠Falling', 'Corki'],
